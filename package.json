@@ -2,36 +2,37 @@
   "name": "tstate-machine",
   "version": "1.1.1",
   "description": "TypeScript implementation of StateMachine",
-  "types": "index.d.ts",
-  "typescript": {
-    "definition": "index.d.ts"
-  },
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
   "directories": {
     "test": "test"
   },
   "scripts": {
-    "test": "node_modules/.bin/mocha -r ts-node/register test/**/*.ts",
-    "lint-code": "node_modules/.bin/tslint -c ./tslint.json -p ./tsconfig.json --type-check",
-    "build": "webpack"
+    "test": "mocha -r ts-node/register test/**/*.ts",
+    "lint-code": "tslint -c ./tslint.json -p ./tsconfig.json --type-check",
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SoEasy/tstate-machine.git"
+    "url": "https://github.com/evanshortiss/tstate-machine.git"
   },
   "keywords": [
     "statemachine",
     "state-machine",
     "typescript"
   ],
-  "author": "Vladimir Sannikov",
+  "authors": [
+    "Vladimir Sannikov",
+    "Evan Shortiss"
+  ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/SoEasy/tstate-machine/issues"
+    "url": "https://github.com/evanshortiss/tstate-machine/issues"
   },
-  "homepage": "https://github.com/SoEasy/tstate-machine#readme",
+  "homepage": "https://github.com/evanshortiss/tstate-machine#readme",
   "devDependencies": {
-    "@types/chai": "^4.0.3",
-    "@types/mocha": "^2.2.41",
+    "@types/chai": "~4.0.3",
+    "@types/mocha": "~2.2.41",
     "chai": "4.1.1",
     "dts-bundle": "0.7.2",
     "mocha": "3.5.0",
