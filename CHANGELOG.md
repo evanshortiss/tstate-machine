@@ -1,3 +1,7 @@
+# 1.1.5
+
+* Remove extra `console.log` calls from published module.
+
 # 1.1.4
 
 * Do not publish TypeScript (`.ts`) files, but *do* publish `d.ts`.
