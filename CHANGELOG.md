@@ -1,6 +1,10 @@
+# 1.1.4
+
+* Do not publish TypeScript (`.ts`) files, but *do* publish `d.ts`.
+
 # 1.1.3
 
-* Do not publish TypeScript (*.ts) files.
+* Do not publish TypeScript (`.ts`) files.
 
 # 1.1.1
 - Translated readme, comments and changelog

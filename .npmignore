@@ -4,10 +4,10 @@
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # TS/JS stuff
+*.ts
 *.js.map
 !*.d.ts
 !*.js
-*.ts
 
 # User-specific stuff:
 .idea/**/tasks.xml
