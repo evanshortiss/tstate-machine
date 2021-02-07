@@ -119,7 +119,6 @@ export class StateMachine {
 
         // Make chain of states
         const stateChain: Array<any> = [stateToApply];
-
         if (targetState !== 'initial') {
             const targetStateProps: StateMachineMetadata = this.getMetadataByName(targetState);
             let parentStateName = targetStateProps.parentState;
