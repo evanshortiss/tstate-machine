@@ -1,4 +1,8 @@
-1.1.1
+# 1.1.3
+
+* Do not publish TypeScript (*.ts) files.
+
+# 1.1.1
 - Translated readme, comments and changelog
 - `@StateMachine.hide` become universal - for properties and methods
 

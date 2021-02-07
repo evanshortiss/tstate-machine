@@ -69,10 +69,15 @@ describe('tstatemachine', () => {
     it('initial state is immutable', () => {
         const machine = new Machine();
         machine.transitTo('mainState');
+        expect(machine.currentState).to.equal('mainState')
         machine.transitTo('requestState');
+        expect(machine.currentState).to.equal('requestState')
         machine.transitTo('successState');
+        expect(machine.currentState).to.equal('successState')
         machine.transitTo('mainState');
+        expect(machine.currentState).to.equal('mainState')
         machine.transitTo('requestState');
+        expect(machine.currentState).to.equal('requestState')
 
         expect(machine.alert).to.deep.equal({
             text: 'alert',
