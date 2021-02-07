@@ -10,7 +10,8 @@
   "scripts": {
     "test": "tsc && mocha -r ts-node/register test/**/*.ts",
     "lint-code": "tslint -c ./tslint.json -p ./tsconfig.json --type-check",
-    "build": "tsc"
+    "build": "tsc",
+    "prepublish": "tsc"
   },
   "repository": {
     "type": "git",
