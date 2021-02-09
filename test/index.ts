@@ -1,6 +1,6 @@
+import 'reflect-metadata';
 import { expect } from 'chai';
 import { StateMachine } from '../src/StateMachine';
-import 'reflect-metadata';
 import { IStateDeclaration } from '../src/StateDeclaration';
 
 type MachineState = IStateDeclaration<Machine>;
