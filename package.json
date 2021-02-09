@@ -9,7 +9,7 @@
   },
   "scripts": {
     "test": "tsc && mocha -r ts-node/register test/index.ts && mocha -r ts-node/register test/without-polyfill.ts",
-    "lint-code": "tslint -c ./tslint.json -p ./tsconfig.json --type-check",
+    "format": "prettier --config package.json --write \"**/*.ts\"",
     "build": "tsc",
     "prepublish": "tsc"
   },
@@ -22,6 +22,16 @@
     "state-machine",
     "typescript"
   ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged --pattern \"**/*.ts\""
+    }
+  },
+  "prettier": {
+    "trailingComma": "none",
+    "singleQuote": true,
+    "tabWidth": 2
+  },
   "authors": [
     "Vladimir Sannikov",
     "Evan Shortiss"
@@ -36,8 +46,11 @@
     "@types/mocha": "~2.2.41",
     "@types/node": "^14.14.25",
     "chai": "4.1.1",
+    "husky": "^5.0.9",
     "mocha": "^8.2.1",
     "nyc": "^15.1.0",
+    "prettier": "^2.2.1",
+    "pretty-quick": "^3.1.0",
     "reflect-metadata": "0.1.10",
     "ts-node": "3.3.0",
     "typescript": "~4.1.3"
