@@ -1,3 +1,7 @@
+# 1.1.6
+
+* Ensure updated JS files are published using `prepublish` hook.
+
 # 1.1.5
 
 * Remove extra `console.log` calls from published module.
