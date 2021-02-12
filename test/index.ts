@@ -4,14 +4,14 @@ import { StateMachine, TransitionError } from '../src/StateMachine';
 import { PartialProperties } from '../src/PartialProperties';
 
 type MachineProps = {
-  text: string,
+  text: string;
   alert: {
-    text?: string
-    visible?: boolean
-  }
-}
+    text?: string;
+    visible?: boolean;
+  };
+};
 type PartialMachineProps = PartialProperties<MachineProps>;
-type ValidStates = 'requestState'|'errorState'|'mainState'|'successState'
+type ValidStates = 'requestState' | 'errorState' | 'mainState' | 'successState';
 
 class Machine extends StateMachine<MachineProps, ValidStates> {
   @StateMachine.extend(StateMachine.INITIAL, ['requestState'])
@@ -109,7 +109,7 @@ describe('tstate-machine', () => {
     // Incorrect transition
     const failureReason = machine.transitTo('successState');
 
-    expect(failureReason).to.equal(TransitionError.InvalidTransition)
+    expect(failureReason).to.equal(TransitionError.InvalidTransition);
 
     expectIsInitial(machine);
   });
@@ -122,7 +122,7 @@ describe('tstate-machine', () => {
     // Incorrect state
     const failureReason = machine.transitTo('mainState');
 
-    expect(failureReason).to.equal(TransitionError.InvalidTransition)
+    expect(failureReason).to.equal(TransitionError.InvalidTransition);
 
     expect(machine.props.text).to.be.equal('request');
     expect(machine.props.alert).to.be.eql({
@@ -135,7 +135,7 @@ describe('tstate-machine', () => {
     const machine = new Machine();
     // need to cast to attempt to enter invalid state
     const failureReason = machine.transitTo('foobar' as any);
-    expect(failureReason).to.equal(TransitionError.StateNotRegistered)
+    expect(failureReason).to.equal(TransitionError.StateNotRegistered);
     expectIsInitial(machine);
   });
 

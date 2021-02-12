@@ -31,7 +31,7 @@ export class StateMachineInnerStore<Props> {
    * @description store initial value of property to $initialState
    */
   rememberInitialState(props: Props): void {
-    this.$initialState = cloneDeep(props)
+    this.$initialState = cloneDeep(props);
   }
 
   get initialState(): Props {

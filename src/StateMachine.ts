@@ -15,35 +15,40 @@ export enum TransitionError {
   StateNotRegistered = 'StateNotRegistered'
 }
 
-export class StateMachine<Props extends Record<string, unknown>, ValidStates extends string> {
+export class StateMachine<
+  Props extends Record<string, unknown>,
+  ValidStates extends string
+> {
   /**
    * @description constant to store initial state name
    * @type {string}
    */
   static INITIAL: string = 'initial';
-  private initialTransitions: Array<string>
-  private logging: boolean
-  public props: Props
+  private initialTransitions: Array<string>;
+  private logging: boolean;
+  public props: Props;
 
-  constructor (opts: {
-    initialTransitions: Array<ValidStates>,
-    props: Props,
-    logging?: boolean
+  constructor(opts: {
+    initialTransitions: Array<ValidStates>;
+    props: Props;
+    logging?: boolean;
   }) {
     if (opts.initialTransitions.length === 0) {
-      throw new Error('opts.initialTransitions must contain at least one valid transition string')
+      throw new Error(
+        'opts.initialTransitions must contain at least one valid transition string'
+      );
     }
-    this.initialTransitions = opts.initialTransitions
-    this.logging = opts.logging === undefined ? false : true
+    this.initialTransitions = opts.initialTransitions;
+    this.logging = opts.logging === undefined ? false : true;
 
     // Set initial property values and remember them for future extend calls
-    this.props = opts.props
-    this.rememberInitProps(opts.props)
+    this.props = opts.props;
+    this.rememberInitProps(opts.props);
   }
 
-  private logError (msg) {
+  private logError(msg) {
     if (this.logging) {
-      console.error(msg)
+      console.error(msg);
     }
   }
 
@@ -95,9 +100,9 @@ export class StateMachine<Props extends Record<string, unknown>, ValidStates ext
    */
   @StateMachine.hide
   private get $store(): StateMachineInnerStore<Props> {
-    let store: StateMachineInnerStore<Props> | undefined = StateMachineWeakMap.get(
-      this
-    );
+    let store:
+      | StateMachineInnerStore<Props>
+      | undefined = StateMachineWeakMap.get(this);
     if (store) {
       return store;
     }
@@ -129,10 +134,15 @@ export class StateMachine<Props extends Record<string, unknown>, ValidStates ext
    * @param args - any data for pass to onEnter callback
    */
   @StateMachine.hide
-  transitTo(targetState: ValidStates, ...args: Array<any>): TransitionError|void {
+  transitTo(
+    targetState: ValidStates,
+    ...args: Array<any>
+  ): TransitionError | void {
     // Check target state is registered
     const stateToApply =
-      targetState !== 'initial' ? this[targetState as string] : this.$store.initialState;
+      targetState !== 'initial'
+        ? this[targetState as string]
+        : this.$store.initialState;
     if (!stateToApply) {
       // Here and next - simply write error to console and return
       this.logError(`No state '${targetState}' for navigation registered`);
@@ -207,11 +217,14 @@ export class StateMachine<Props extends Record<string, unknown>, ValidStates ext
    */
   @StateMachine.hide
   private rememberInitProps(props: Props): void {
-    this.$store.rememberInitialState(props)
+    this.$store.rememberInitialState(props);
   }
 
   @StateMachine.hide
-  onEnter(stateName: ValidStates, cb: (...args: Array<any>) => void): () => void {
+  onEnter(
+    stateName: ValidStates,
+    cb: (...args: Array<any>) => void
+  ): () => void {
     return this.$store.registerEnterCallback(stateName, cb);
   }
 
@@ -229,7 +242,7 @@ export class StateMachine<Props extends Record<string, unknown>, ValidStates ext
   }
 
   @StateMachine.hide
-  is(stateName: ValidStates|'initial'): boolean {
+  is(stateName: ValidStates | 'initial'): boolean {
     return this.currentState === stateName;
   }
 
