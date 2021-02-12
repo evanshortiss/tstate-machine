@@ -9,7 +9,7 @@ Class-based, declarative, strongly typed state machine with hard declared transi
 ## Install
 
 ```bash
-npm install @evanshortiss/tstate-machine --save
+npm install reflect-metadata @evanshortiss/tstate-machine --save
 ```
 
 ## Example
@@ -18,7 +18,9 @@ A complete example can be found in [example/traffic.ts](example/traffic.ts).
 Run it by issuing an `npm run example` command.
 
 ```ts
+// A Reflect.defineMetata polyfill is required by tstate-machine
 import 'reflect-metadata';
+
 import { StateMachine, IStateDeclaration } from '@evanshortiss/tstate-machine';
 
 enum Colours {
