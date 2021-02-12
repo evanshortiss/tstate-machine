@@ -15,7 +15,7 @@ export enum TransitionError {
   StateNotRegistered = 'StateNotRegistered'
 }
 
-export class StateMachine<StateProperties extends Record<string, unknown>, StateNames extends string> {
+export class StateMachine<StateProperties extends Record<string, unknown>, ValidStates extends string> {
   /**
    * @description constant to store initial state name
    * @type {string}
@@ -25,7 +25,7 @@ export class StateMachine<StateProperties extends Record<string, unknown>, State
   private logging: boolean
 
   constructor (opts: {
-    initialTransitions: Array<StateNames>,
+    initialTransitions: Array<ValidStates>,
     initialStateProperties: StateProperties,
     logging?: boolean
   }) {
@@ -130,7 +130,7 @@ export class StateMachine<StateProperties extends Record<string, unknown>, State
    * @param args - any data for pass to onEnter callback
    */
   @StateMachine.hide
-  transitTo(targetState: StateNames, ...args: Array<any>): TransitionError|void {
+  transitTo(targetState: ValidStates, ...args: Array<any>): TransitionError|void {
     // Check target state is registered
     const stateToApply =
       targetState !== 'initial' ? this[targetState as string] : this.$store.initialState;
@@ -216,12 +216,12 @@ export class StateMachine<StateProperties extends Record<string, unknown>, State
   }
 
   @StateMachine.hide
-  onEnter(stateName: StateNames, cb: (...args: Array<any>) => void): () => void {
+  onEnter(stateName: ValidStates, cb: (...args: Array<any>) => void): () => void {
     return this.$store.registerEnterCallback(stateName, cb);
   }
 
   @StateMachine.hide
-  onLeave(stateName: StateNames, cb: () => void): () => void {
+  onLeave(stateName: ValidStates, cb: () => void): () => void {
     return this.$store.registerLeaveCallback(stateName, cb);
   }
 
@@ -234,12 +234,12 @@ export class StateMachine<StateProperties extends Record<string, unknown>, State
   }
 
   @StateMachine.hide
-  is(stateName: StateNames|'initial'): boolean {
+  is(stateName: ValidStates|'initial'): boolean {
     return this.currentState === stateName;
   }
 
   @StateMachine.hide
-  can(stateName: StateNames): boolean {
+  can(stateName: ValidStates): boolean {
     if (this.$store.isInitialState) {
       return this.initialTransitions.includes(stateName);
     }
