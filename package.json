@@ -1,13 +1,11 @@
 {
   "name": "@evanshortiss/tstate-machine",
-  "version": "1.1.6",
+  "version": "2.0.0",
   "description": "TypeScript implementation of StateMachine",
   "main": "src/index.js",
   "types": "src/index.d.ts",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
+    "example": "tsc && node example/traffic.js",
     "test": "tsc && mocha -r ts-node/register test/index.ts && mocha -r ts-node/register test/without-polyfill.ts",
     "format": "prettier --config package.json --write \"**/*.ts\"",
     "build": "tsc",
@@ -44,13 +42,13 @@
   "devDependencies": {
     "@types/chai": "~4.0.3",
     "@types/mocha": "~2.2.41",
-    "@types/node": "^14.14.25",
+    "@types/node": "~14.14.25",
     "chai": "4.1.1",
-    "husky": "^5.0.9",
-    "mocha": "^8.2.1",
-    "nyc": "^15.1.0",
-    "prettier": "^2.2.1",
-    "pretty-quick": "^3.1.0",
+    "husky": "~5.0.9",
+    "mocha": "~8.2.1",
+    "nyc": "~15.1.0",
+    "prettier": "~2.2.1",
+    "pretty-quick": "~3.1.0",
     "reflect-metadata": "0.1.10",
     "ts-node": "3.3.0",
     "typescript": "~4.1.3"

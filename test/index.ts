@@ -1,28 +1,26 @@
 import 'reflect-metadata';
 import { expect } from 'chai';
-import { StateMachine } from '../src/StateMachine';
+import { StateMachine, TransitionError } from '../src/StateMachine';
 import { IStateDeclaration } from '../src/StateDeclaration';
 
-type MachineState = IStateDeclaration<Machine>;
+type MachineProps = IStateDeclaration<Machine>;
+type ValidStates = 'requestState'|'errorState'|'mainState'|'successState'
 
-class Machine extends StateMachine {
-  text: string = 'do';
-  alert: Record<string, any> = {
-    text: 'alert',
-    visible: false
-  };
+class Machine extends StateMachine<MachineProps, ValidStates> {
+  text: string;
+  alert: Record<string, any>;
 
   @StateMachine.extend(StateMachine.INITIAL, ['requestState'])
-  mainState: MachineState = {};
+  mainState: MachineProps = {};
 
   @StateMachine.extend('mainState', ['successState', 'errorState'])
-  requestState: MachineState = {
+  requestState: MachineProps = {
     text: 'request'
   };
 
   // Base state for extending only
   @StateMachine.extend('mainState', [])
-  doneState: MachineState = {
+  doneState: MachineProps = {
     text: 'done',
     alert: {
       visible: true
@@ -30,27 +28,30 @@ class Machine extends StateMachine {
   };
 
   @StateMachine.extend('doneState', ['mainState'])
-  successState: MachineState = {
+  successState: MachineProps = {
     alert: {
       text: 'success'
     }
   };
 
   @StateMachine.extend('doneState', ['mainState'])
-  errorState: MachineState = {
+  errorState: MachineProps = {
     alert: {
       text: 'error'
     }
   };
 
-  @StateMachine.hide
-  protected get $next(): Array<string> {
-    return ['mainState'];
-  }
-
   constructor() {
-    super();
-    this.rememberInitState();
+    super({
+      initialTransitions: ['mainState'],
+      initialStateProperties: {
+        text: 'do',
+        alert: {
+          text: 'alert',
+          visible: false
+        }
+      }
+    });
   }
 }
 
@@ -65,7 +66,7 @@ function expectIsInitial(machine: Machine): void {
   });
 }
 
-describe('tstatemachine', () => {
+describe('tstate-machine', () => {
   it('initial state is immutable', () => {
     const machine = new Machine();
     machine.transitTo('mainState');
@@ -102,7 +103,9 @@ describe('tstatemachine', () => {
     // Correct transition
     machine.transitTo('mainState');
     // Incorrect transition
-    machine.transitTo('successState');
+    const failureReason = machine.transitTo('successState');
+
+    expect(failureReason).to.equal(TransitionError.InvalidTransition)
 
     expectIsInitial(machine);
   });
@@ -113,7 +116,9 @@ describe('tstatemachine', () => {
     machine.transitTo('mainState');
     machine.transitTo('requestState');
     // Incorrect state
-    machine.transitTo('mainState');
+    const failureReason = machine.transitTo('mainState');
+
+    expect(failureReason).to.equal(TransitionError.InvalidTransition)
 
     expect(machine.text).to.be.equal('request');
     expect(machine.alert).to.be.eql({
@@ -124,7 +129,9 @@ describe('tstatemachine', () => {
 
   it('must not transit to unregistered state from initial', () => {
     const machine = new Machine();
-    machine.transitTo('foobar');
+    // need to cast to attempt to enter invalid state
+    const failureReason = machine.transitTo('foobar' as any);
+    expect(failureReason).to.equal(TransitionError.StateNotRegistered)
     expectIsInitial(machine);
   });
 

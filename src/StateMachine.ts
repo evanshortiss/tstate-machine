@@ -6,16 +6,47 @@ import { StateMachineMetadata } from './StateMachineMetadata';
  * @description isolated store for meta-information of concrete StateMachine
  */
 const StateMachineWeakMap: WeakMap<
-  StateMachine,
+  StateMachine<any, any>,
   StateMachineInnerStore
-> = new WeakMap<StateMachine, StateMachineInnerStore>();
+> = new WeakMap<StateMachine<any, any>, StateMachineInnerStore>();
 
-export class StateMachine {
+export enum TransitionError {
+  InvalidTransition = 'InvalidTransition',
+  StateNotRegistered = 'StateNotRegistered'
+}
+
+export class StateMachine<StateProperties extends Record<string, unknown>, StateNames extends string> {
   /**
    * @description constant to store initial state name
    * @type {string}
    */
   static INITIAL: string = 'initial';
+  private initialTransitions: Array<string>
+  private logging: boolean
+
+  constructor (opts: {
+    initialTransitions: Array<StateNames>,
+    initialStateProperties: StateProperties,
+    logging?: boolean
+  }) {
+    if (opts.initialTransitions.length === 0) {
+      throw new Error('opts.initialTransitions must contain at least one valid transition string')
+    }
+    this.initialTransitions = opts.initialTransitions
+    this.logging = opts.logging === undefined ? false : true
+
+    // Set initial property values and remember them for future extend calls
+    for (let k in opts.initialStateProperties) {
+      this[k as string] = opts.initialStateProperties[k]
+    }
+    this.rememberInitState(opts.initialStateProperties)
+  }
+
+  private logError (msg) {
+    if (this.logging) {
+      console.error(msg)
+    }
+  }
 
   /**
    * @description static service method for generate error text about unable transit to
@@ -27,7 +58,7 @@ export class StateMachine {
     currentState: string,
     stateName: string
   ): string {
-    return `Navigate to ${stateName} restircted by 'to' argument of state ${currentState}`;
+    return `Navigate to ${stateName} restricted by 'to' argument of state ${currentState}`;
   }
 
   /**
@@ -77,14 +108,6 @@ export class StateMachine {
   }
 
   /**
-   * @description Array of states in which machine can transit from initial
-   */
-  @StateMachine.hide
-  protected get $next(): Array<string> {
-    return [];
-  }
-
-  /**
    * @description Service method for get prototype of current instance
    */
   @StateMachine.hide
@@ -107,27 +130,27 @@ export class StateMachine {
    * @param args - any data for pass to onEnter callback
    */
   @StateMachine.hide
-  transitTo(targetState: string, ...args: Array<any>): void {
+  transitTo(targetState: StateNames, ...args: Array<any>): TransitionError|void {
     // Check target state is registered
     const stateToApply =
-      targetState !== 'initial' ? this[targetState] : this.$store.initialState;
+      targetState !== 'initial' ? this[targetState as string] : this.$store.initialState;
     if (!stateToApply) {
       // Here and next - simply write error to console and return
-      console.error(`No state '${targetState}' for navigation registered`);
-      return;
+      this.logError(`No state '${targetState}' for navigation registered`);
+      return TransitionError.StateNotRegistered;
     }
 
     // Check transition is possible
     if (this.$store.isInitialState) {
       // initial state store next on $next
-      if (!this.$next.includes(targetState)) {
-        console.error(
+      if (!this.initialTransitions.includes(targetState)) {
+        this.logError(
           StateMachine.NEXT_STATE_RESTRICTED(
             this.$store.currentState,
             targetState
           )
         );
-        return;
+        return TransitionError.InvalidTransition;
       }
     } else {
       // another states store next in them metadata
@@ -136,13 +159,13 @@ export class StateMachine {
       );
       const to: Array<string> = currentStateProps.to;
       if (!to.includes(targetState)) {
-        console.error(
+        this.logError(
           StateMachine.NEXT_STATE_RESTRICTED(
             this.$store.currentState,
             targetState
           )
         );
-        return;
+        return TransitionError.InvalidTransition;
       }
     }
 
@@ -184,21 +207,21 @@ export class StateMachine {
    * for create a snapshot of initial state
    */
   @StateMachine.hide
-  protected rememberInitState(): void {
-    for (const key in this) {
+  private rememberInitState(state: StateProperties): void {
+    for (const key in state) {
       if (key !== 'constructor') {
-        this.$store.rememberInitialKey(key, this[key]);
+        this.$store.rememberInitialKey(key, state[key]);
       }
     }
   }
 
   @StateMachine.hide
-  onEnter(stateName: string, cb: (...args: Array<any>) => void): () => void {
+  onEnter(stateName: StateNames, cb: (...args: Array<any>) => void): () => void {
     return this.$store.registerEnterCallback(stateName, cb);
   }
 
   @StateMachine.hide
-  onLeave(stateName: string, cb: () => void): () => void {
+  onLeave(stateName: StateNames, cb: () => void): () => void {
     return this.$store.registerLeaveCallback(stateName, cb);
   }
 
@@ -211,14 +234,14 @@ export class StateMachine {
   }
 
   @StateMachine.hide
-  is(stateName: string): boolean {
+  is(stateName: StateNames|'initial'): boolean {
     return this.currentState === stateName;
   }
 
   @StateMachine.hide
-  can(stateName: string): boolean {
+  can(stateName: StateNames): boolean {
     if (this.$store.isInitialState) {
-      return this.$next.includes(stateName);
+      return this.initialTransitions.includes(stateName);
     }
     const currentStateProps: StateMachineMetadata = StateMachineMetadata.getByName(
       this.selfPrototype,
@@ -230,7 +253,7 @@ export class StateMachine {
   @StateMachine.hide
   transitions(): Array<string> {
     return this.$store.isInitialState
-      ? this.$next
+      ? this.initialTransitions
       : this.getMetadataByName(this.currentState).to;
   }
 }

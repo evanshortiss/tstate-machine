@@ -1,208 +1,279 @@
 # tstate-machine
-[![Build Status](https://travis-ci.org/SoEasy/tstate-machine.svg?branch=master)](https://travis-ci.org/SoEasy/tstate-machine)
 
-StateMachine implementation on TypeScript. Works fine with ES6
+StateMachine implementation in TypeScript. This is an updated fork of the
+excellent [SoEasy/tstate-machine](https://github.com/SoEasy/tstate-machine).
 
 ## Overview
 Class-based, declarative, strongly typed state machine with hard declared transitions and without autocomplete problems.
 
-## Example
-```javascript
-import { IStateDeclaration, StateMachine } from 'tstate-machine';
+## Install
 
-class ButtonStateMachine extends StateMachine {
-    // initial state
-    text: string = 'do request';
-    diisabled: boolean = false;
-
-    // state declarations
-    // From what state we inherit and in what states we can transit
-    @StateMachine.extend(StateMachine.INTIAL, ['requestState'])
-    mainState: IStateDeclaration<ButtonStateMachine> = {}; // no changes relative to parent(initial) state
-
-    @StateMachine.extend('mainState', ['doneState'])
-    requestState: IStateDeclaration<ButtonStateMachine> = {
-        text: 'sending...',
-        disabled: true
-    };
-
-    @StateMachine.extend('requestState')
-    doneState: IStateDeclaration<ButtonStateMachine> = {
-        text: 'done'
-        // no change disabled - property inherited from requestState and has `false` value
-    };
-
-    // common but important actions
-
-    // states in which one we can transit from initial
-    @StateMachine.hide
-    protected get $next(): Array<string> {
-        return ['mainState'];
-    }
-
-    // remember initial state
-    constructor() {
-        super();
-        this.rememberInitState();
-    }
-}
-
-const machine = new TextStateMachine();
-machine.transitTo('maintState');
-machine.transitTo('requestState');
-console.log(machine.text); // autocomplete works fine!
+```bash
+npm install @evanshortiss/tstate-machine --save
 ```
 
-## Installation
-From npm
->npm install --save tstate-machine
+## Example
 
-From github
->npm install https://github.com/SoEasy/tstate-machine/tarball/master
+A complete example can be found in [example/traffic.ts](example/traffic.ts).
+Run it by issuing an `npm run example` command.
 
-## How to use
+```ts
+import 'reflect-metadata';
+import { StateMachine, IStateDeclaration } from '@evanshortiss/tstate-machine';
+
+enum Colours {
+  Red = 'Red',
+  Orange = 'Orange',
+  Green = 'Green'
+};
+
+// Properties of the TrafficLightStateMachine. These can be automatically
+// updated as part of state transitions, or inherited from previous states
+type TrafficLightProperties = IStateDeclaration<TrafficLightStateMachine>;
+
+// A union type that defines valid states for the machine
+type TrafficLightStates = Colours.Red|Colours.Orange|Colours.Green
+
+class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, TrafficLightStates> {
+  message: string
+  safe: boolean
+
+  /**
+   * Define the Red state:
+   *  - Inherits the initial properties (passed in constructor)
+   *  - Overwrites the initial "message" property value with "STOP"
+   *  - Can only transition to the Green state
+   */
+  @StateMachine.extend(StateMachine.INITIAL, [Colours.Green])
+  [Colours.Red]: TrafficLightProperties = { message: 'STOP' }
+
+  @StateMachine.extend(StateMachine.INITIAL, [Colours.Green, Colours.Red])
+  [Colours.Orange]: TrafficLightProperties = { message: 'CAUTION' }
+
+  @StateMachine.extend(StateMachine.INITIAL, [Colours.Orange])
+  [Colours.Green]: TrafficLightProperties = { message: 'GO', safe: true }
+
+  constructor () {
+    super({
+      // Tells the state machine what state(s) it can initially transition to
+      initialTransitions: [Colours.Green],
+
+      // Define the initial state values for the machine
+      initialStateProperties: {
+        message: 'OFF',
+        safe: false
+      }
+    })
+  }
+}
+
+const machine = new TrafficLightStateMachine()
+
+machine.transitTo(Colours.Green)
+console.log(`Light is ${machine.currentState}. Message is ${machine.message}.`)
+
+machine.transitTo(Colours.Orange)
+console.log(`Light is ${machine.currentState}. Message is ${machine.message}.`)
+
+machine.transitTo(Colours.Red)
+console.log(`Light is ${machine.currentState}. Message is ${machine.message}.`)
+```
+
+## Usage
+
+1. Create class that extends `StateMachine<ValidProps, ValidStates>`.
+2. Define states on your class using `@StateMachine.extend(parent, transitions)`
+3. Call the super constructor with initialisation arguments.
 
 ### Create your own StateMachine
-To create your own state machine you must create class and inherit it from `StateMachine` class.
-```javascript
-class ButtonStateMachine extends StateMachine {}
-```
 
-### Fill initial state
-All declared fields in your class with their initial values will be called `StateMachine.INITIAL`.
-> Important! All of your state fields must contain any initial value: null/undefined/something.
-Otherwise your state machine will not work correctly due to the features of typescript compilation.
+To create your own state machine you must create class and inherit it from
+`StateMachine` class.
 
-```javascript
-class ButtonStateMachine extends StateMachine {
-    text: string = 'do request';
-    disabled: boolean = false;
-}
-```
-Because StateMachine is made by inheritance - to remember initial values you must call method `.rememberInitState` in constructor.
-```javascript
-constructor() {
-    super(); // call constructor of StateMachine
-    this.rememberInitState(); // remember own properties as initial state
-}
-```
+All instances of `StateMachine` start in the default `StateMachine.INITIAL`
+state. You must pass `initialTransitions` and `initialStateProperties` to the
+super constructor to correctly initialise the machine.
 
-### Declare states
-There are not independent states - every state must be inherited from the initial state or from other declared state.
-Simply, if we represent statemachine as graph - we can travel to each state from initial state by transitions.
-
-Also with state declaration we can describe the states in which we can go.
-
-To declare the states there is static method `StateMachine.extend(parentState: string, to: Array<string>|string)` with two arguments - from what state to be inherited and in what states can go.
-
-Properties names becomes as state names.
-```javascript
-// declare mainState, inherit from initial state, can transit to requestState
-@StateMachine.extend(StateMachine.INITIAL, ['requestState'])
-mainState: IStateDeclaration<ButtonStateMachine> = {};
-
-// declare requestState, inherit from mainState, can transit to doneState
-@StateMachine.extend('mainState', ['doneState'])
-requestState: IStateDeclaration<ButtonStateMachine> = {
-    // override initial properties
-    text: 'sending...',
-    disabled: true
+```ts
+enum Colours {
+  Red = 'Red',
+  Orange = 'Orange',
+  Green = 'Green'
 }
 
-// declare doneState, inherit from requestState, cant transit to anything - its final state
-@StateMachine.extend('requestState')
-doneState: IStateDeclaration<ButtonStateMachine> = {
-    text: 'done'
-    // no change disabled - property inherited from requestState and has `false` value
-};
-```
-> Hint: Declaration of new state should contains only changed fields relative to parent state.
+type TrafficLightProperties = IStateDeclaration<TrafficLightStateMachine>;
+type TrafficLightStates = Colours.Red|Colours.Orange|Colours.Green
 
-What is `IStateDeclaration`? It`s a optional simple type to avoid typos.
-```javascript
-export type IStateDeclaration<T> = {
-    [F in keyof T]?: T[F];
+class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, TrafficLightStates> {
+  message: string
+  safe: boolean
+
+  constructor() {
+    super({
+      // Tells the state machine what state(s) it can initially transition to
+      initialTransitions: [Colours.Green],
+
+      // Define the initial property values for the machine
+      initialStateProperties: {
+        message: 'OFF',
+        safe: false
+      }
+    })
+  }
 }
 ```
 
-### Declare initial transitions
-StateMachine can`t transit to random state. Transitions between states must be declared.
-You can imagine that as directed graph.
+### Define States
 
-After creating an instance of your machine they will be in initial state.
-To tell machine in which states we can transit from initial state we must declare getter `$next`:
-```javascript
-@StateMachine.hide // special decorator to avoid properties and methods from for..in iterator
-protected get $next(): Array<string> {
-    return ['mainState'];
+* States are defined as properties on the class.
+* The property name is the state name.
+* Use `@StateMachine.extend` to define a state. It accepts two arguments:
+  * A state to inherit from. This can be `State.INITIAL` or another state.
+  * The state, or states, to which this state can transition.
+* [IStateDeclaration](/src/StateDeclaration.ts) utility is used to:
+  * Extract a type containing class properties.
+  * Pass this type as a Generic to the StateMachine.
+  * This type is used for safety in defining state properties, and the initial state in the super constructor.
+
+The following snippet defines the `Green` state on this
+`TrafficLightStateMachine`.
+
+```ts
+enum Colours {
+  Red = 'Red',
+  Orange = 'Orange',
+  Green = 'Green'
+}
+
+type TrafficLightProperties = IStateDeclaration<TrafficLightStateMachine>;
+type TrafficLightStates = Colours.Red|Colours.Orange|Colours.Green
+
+class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, TrafficLightStates> {
+  message: string
+  safe: boolean
+
+  /**
+   * Define the "Green" state (Colours.Green).
+   *
+   * Extends the initial state, but we override both properties:
+   *  - Property "safe=true", because false is overwritten
+   *  - Property "message="GO", because "OFF" is overwritten
+   *
+   * This state can transition to the "Orange" state.
+   */
+  @StateMachine.extend(StateMachine.INITIAL, [Colours.Orange])
+  [Colours.Green]: TrafficLightProperties = {
+    message: 'GO',
+    safe: true
+  }
+
+  constructor() {
+    super({
+      // Tells the state machine what state(s) it can initially transition to
+      initialTransitions: [Colours.Green],
+
+      // Define the initial state values for the machine
+      initialStateProperties: {
+        message: 'OFF',
+        safe: false
+      }
+    })
+  }
 }
 ```
-Ok, now we can start changing states.
 
-### Transitions between states
-To transit your machine from one state to another simply call `.transitTo(targetState: string, ...args: Array<any>): void` method of your instance.
+The `Red` state could be defined as shown below. Only the `message` property is
+defined, since this state is uses the inherited `false` value for `safe`.
+
+```ts
+/**
+ * Define the "Red" state (Colours.Red).
+ *
+ * Extends the initial state:
+ *  - Property "safe=false", because it's inherited from the initial state
+ *  - Property "message="STOP", because it's overwritten
+ *
+ * This state can transition to the "Green" state.
+ */
+@StateMachine.extend(StateMachine.INITIAL, [Colours.Green])
+[Colours.Red]: TrafficLightProperties = {
+  message: 'STOP'
+}
 ```
-const machine = new ButtonStateMachine();
-machine.transitTo('mainState'); // first transition from initial to main state
-machine.transitTo('requestState'); // We can transit to declared state
+
+### Transition Between States
+
+Call `transitTo(targetState: string, ...args: Array<any>)` to transition
+between states. Arguments passed to `transitTo()` are passed to the `onEnter`
+transition callback(s).
+
+```ts
+const machine = TrafficLightStateMachine()
+
+const ORANGE_TIMEOUT = 4 * 1000 // 4000 milliseconds
+
+machine.transitTo(Colors.Green)
+machine.transitTo(Colors.Orange, ORANGE_TIMEOUT)
+machine.transitTo(Colors.Red)
 ```
-StateMachine restrict the transition to undescribed states:
+
+Attempting to transition to an invalid state will fail. This can be detected by
+checking the return value of `transitTo`.
+
+```ts
+const machine = new TrafficLightStateMachine()
+
+// Will return undefined, since this is a valid transition
+machine.transitTo(Colors.Green)
+
+// Result is "InvalidTransition" since Green => Red is not a valid path
+const greenToRedError = machine.transitTo(Colors.Red)
+
+if (greenToRedError) {
+  console.log(`Failed to transition due to error: ${greenToRedError}`)
+}
 ```
-const machine = new ButtonStateMachine();
-machine.transitTo('doneState'); // cant transit from intial to doneState
-// throw error: Navigate to doneState restircted by 'to' argument of state initial
+
+### Transition Callbacks (onEnter and onLeave)
+
+Callbacks can be registered for `onLeave` and `onEnter` phases of a satte
+transition.
+
+```ts
+const machine = new TrafficLightStateMachine();
+
+const ORANGE_TIMEOUT = 4 * 1000; // 4000 milliseconds
+
+const removeOrangeEnterCb = machine.onEnter(Colours.Orange, (timeout: number) => {
+  // Change to Red state after the given timeout
+  setTimeout(() => machine.transitTo(Colous.Red), timeout);
+});
+
+machine.onLeave(Colours.Orange, () => console.log('Leaving Orange state'));
+
+// Transition to green, then orange (this will trigger a callback)
+machine.transitTo(Colors.Green);
+machine.transitTo(Colors.Orange, ORANGE_TIMEOUT);
+
+// Remove a registered callback
+removeOrangeEnterCb();
 ```
-if you try to navigate in unregistered state - machine throw error `No state '%NAME%' for navigation registered`.
-
-### onEnter and onLeave events
-StateMachine supports register callbacks to enter and leave states.
-```
-const machine = new ButtonStateMachine();
-// register callbacks
-const onEnterDoneHandler = machine.onEnter('mainState', (message) => { alert(`main! ${message}`); });
-// Add another onEnter-callback to same state
-const onOneMoreEnterDoneHandler = machine.onEnter('mainState', () => { /* do anything */ });
-const onLeaveDoneHandler = machine.onLeave('doneState, () => { alert('...'); });
-
-machine.transitTo('mainState', 'hello');
-
-// unregister callbacks
-onEnterDoneHandler();
-onLeaveDoneHandler();
-```
-Method `.transitTo` can receive many arguments which passed to onEnter callback.
-
-`onEnter` and `onLeave` methods returns functions - call them and callback will be destroyed.
-
-## How it works
-The StateMachine based on several things: metadata, descriptors, for..in iterator over object properties.
-
-Scheme:
-1. In a child-class constructor call inherited `this.rememberInitState()` method which iterate over object properties and remember them values as initial state.
-2. In a child class define protected getter calling `$next` which return array of possible states to transit in one of them from initial state.
-3. With help of special decorator `@StateMachine.extend` register new states which look like diff-objects. Decorator save them into metadata.
-4. When transition happens - we build chain of transitions from initial to target state, bring the object to initial state and one-by-one apply states from chain to them.
-5. All class methods wrapped by `@StateMachine.hide` decorator to avoid them falling into for..in cycle under the hood of StateMachine. It`s important to each transition does not override them.
 
 ## API
+
+### StateMachine Static Methods
 - `@StateMachine.hide()` - decorator for wrapping fields/methods that are not related to the state
-- `StateMachine.extend(parentState, to)` - declaring new state, inherited from parentState, possible to transit `to` states
-- `transitTo(targetState, ...args)` - transit machine to targetState. Optional - args for `onEnter` callback
-- `currentState: string` - name of current state
-- `is(stateName): boolean` - current state == stateName
-- `can(stateName): boolean` - is it possible to transit to stateName?
-- `transitions(): Array<string>` - possible transitions from current state
+- `@StateMachine.extend(parentState: string, toStates: Array<string>)` - Declares new state. Inherit class properties from `parentState`. Possible transitions are `to` states.
+
+### StateMachine Instance Methods
+- `transitTo(targetState, ...args)` - Transition to `targetState`. Supports optional variadic arguments that will be passed
+- `currentState: string` - Get the current state the machine is in.
+- `is(stateName: string): boolean` - Check if current state is `stateName`.
+- `can(stateNameL string): boolean` - Check if it's possible to transition to stateName.
+- `transitions(): Array<string>` - Returns a list possible transitions from the current state.
 - `onEnter(stateName: string, cb: (...args: Array<any>) => void): () => void` - add onEnter callback
 - `onLeave(stateName: string, cb: () => void): () => void` - add onLeave callback
-
-## Recommendations
-- dont forget to call `rememberInitState` and declare `get $next`
-- Make an adequate chain of states.
-- New state can define only changed fields relative to parent state
 
 ## Thanks
 The interface is peeked here:
 [JS FSM](https://github.com/jakesgordon/javascript-state-machine).
-
-## LICENCE
-MIT
