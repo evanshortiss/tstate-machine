@@ -60,10 +60,13 @@ const logMachineState = (c: string) => {
   console.log('========================================\n')
 }
 
+// Start by logging the initial state
+logMachineState(StateMachine.INITIAL)
+
+// Next setup onEnter callback for each state with logging
 Object.values(Colours).forEach(c => {
   machine.onEnter(c, () => logMachineState(c))
 })
-logMachineState(StateMachine.INITIAL)
 machine.transitTo(Colours.Green)
 machine.transitTo(Colours.Orange)
 machine.transitTo(Colours.Red)
