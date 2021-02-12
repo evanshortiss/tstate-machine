@@ -7,15 +7,15 @@ import { StateMachineMetadata } from './StateMachineMetadata';
  */
 const StateMachineWeakMap: WeakMap<
   StateMachine<any, any>,
-  StateMachineInnerStore
-> = new WeakMap<StateMachine<any, any>, StateMachineInnerStore>();
+  StateMachineInnerStore<any>
+> = new WeakMap<StateMachine<any, any>, StateMachineInnerStore<any>>();
 
 export enum TransitionError {
   InvalidTransition = 'InvalidTransition',
   StateNotRegistered = 'StateNotRegistered'
 }
 
-export class StateMachine<StateProperties extends Record<string, unknown>, ValidStates extends string> {
+export class StateMachine<Props extends Record<string, unknown>, ValidStates extends string> {
   /**
    * @description constant to store initial state name
    * @type {string}
@@ -23,10 +23,11 @@ export class StateMachine<StateProperties extends Record<string, unknown>, Valid
   static INITIAL: string = 'initial';
   private initialTransitions: Array<string>
   private logging: boolean
+  public props: Props
 
   constructor (opts: {
     initialTransitions: Array<ValidStates>,
-    initialStateProperties: StateProperties,
+    props: Props,
     logging?: boolean
   }) {
     if (opts.initialTransitions.length === 0) {
@@ -36,10 +37,8 @@ export class StateMachine<StateProperties extends Record<string, unknown>, Valid
     this.logging = opts.logging === undefined ? false : true
 
     // Set initial property values and remember them for future extend calls
-    for (let k in opts.initialStateProperties) {
-      this[k as string] = opts.initialStateProperties[k]
-    }
-    this.rememberInitState(opts.initialStateProperties)
+    this.props = opts.props
+    this.rememberInitProps(opts.props)
   }
 
   private logError (msg) {
@@ -95,8 +94,8 @@ export class StateMachine<StateProperties extends Record<string, unknown>, Valid
    * @description Receive store of inner information for this instance of StateMachine
    */
   @StateMachine.hide
-  private get $store(): StateMachineInnerStore {
-    let store: StateMachineInnerStore | undefined = StateMachineWeakMap.get(
+  private get $store(): StateMachineInnerStore<Props> {
+    let store: StateMachineInnerStore<Props> | undefined = StateMachineWeakMap.get(
       this
     );
     if (store) {
@@ -190,10 +189,10 @@ export class StateMachine<StateProperties extends Record<string, unknown>, Valid
     this.$store.callLeaveCbs();
 
     // Apply states chain
-    merge(this, this.$store.initialState);
+    merge(this.props, this.$store.initialState);
     while (stateChain.length) {
       const tempState = stateChain.shift();
-      merge(this, tempState);
+      merge(this.props, tempState);
     }
 
     // Call all onEnter callbacks
@@ -207,12 +206,8 @@ export class StateMachine<StateProperties extends Record<string, unknown>, Valid
    * for create a snapshot of initial state
    */
   @StateMachine.hide
-  private rememberInitState(state: StateProperties): void {
-    for (const key in state) {
-      if (key !== 'constructor') {
-        this.$store.rememberInitialKey(key, state[key]);
-      }
-    }
+  private rememberInitProps(props: Props): void {
+    this.$store.rememberInitialState(props)
   }
 
   @StateMachine.hide

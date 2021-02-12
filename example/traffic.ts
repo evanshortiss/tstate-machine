@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { StateMachine, IStateDeclaration } from '../src/index'
+import { StateMachine, PartialProperties } from '../src/index'
 
 enum Colours {
   Red = 'Red',
@@ -7,7 +7,11 @@ enum Colours {
   Green = 'Green'
 }
 
-type TrafficLightProperties = IStateDeclaration<TrafficLightStateMachine>;
+type TrafficLightProps = {
+  safe: boolean
+  message: string
+}
+type PartialTrafficLightProps = PartialProperties<TrafficLightProps>
 type TrafficLightStates = Colours.Red|Colours.Orange|Colours.Green
 
 /**
@@ -16,22 +20,20 @@ type TrafficLightStates = Colours.Red|Colours.Orange|Colours.Green
  * Can be in Red, Orange, or Green state. Each state has a unique "message"
  * associated with it.
  */
-class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, TrafficLightStates> {
-  message: string
-  safe: boolean
+class TrafficLightStateMachine extends StateMachine<TrafficLightProps, TrafficLightStates> {
 
   @StateMachine.extend(StateMachine.INITIAL, [Colours.Green])
-  [Colours.Red]: TrafficLightProperties = {
+  [Colours.Red]: PartialTrafficLightProps = {
     message: 'STOP'
   }
 
   @StateMachine.extend(StateMachine.INITIAL, [Colours.Green, Colours.Red])
-  [Colours.Orange]: TrafficLightProperties = {
+  [Colours.Orange]: PartialTrafficLightProps = {
     message: 'CAUTION'
   }
 
   @StateMachine.extend(StateMachine.INITIAL, Colours.Orange)
-  [Colours.Green]: TrafficLightProperties = {
+  [Colours.Green]: PartialTrafficLightProps = {
     message: 'GO',
     safe: true
   }
@@ -42,7 +44,7 @@ class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, Traf
       initialTransitions: [Colours.Green],
 
       // Define the initial state values for the machine
-      initialStateProperties: {
+      props: {
         message: 'OFF',
         safe: false
       }
@@ -56,7 +58,7 @@ const invalidStateName = 'Blue'
 const logMachineState = (c: string) => {
   console.log('========================================')
   console.log(`Entered ${c} state.`)
-  console.log(`Light is ${machine.currentState}. Message is "${machine.message}". Safe: ${machine.safe}`)
+  console.log(`Light is ${machine.currentState}. Message is "${machine.props.message}". Safe: ${machine.props.safe}`)
   console.log('========================================\n')
 }
 

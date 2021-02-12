@@ -8,4 +8,4 @@ if (
 }
 
 export { StateMachine } from './StateMachine';
-export { IStateDeclaration } from './StateDeclaration';
+export { PartialProperties } from './PartialProperties';

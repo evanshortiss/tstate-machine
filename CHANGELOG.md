@@ -2,7 +2,9 @@
 
 * `StateMachine` constructor now expects an options Object, i.e `super(opts)`.
 * `opts.initialTransitions` is required by the super constructor. This replaces `$next` requirement.
-* `opts.initialStateProperties` is required by the super constructor. This replaces `rememberInitState` requirement.
+* Rename `IStateDeclaration` to `PartialProperties`.
+* Remove support for individual class fields in favour of a `props` container.
+* `opts.props` is required by the super constructor. This replaces `rememberInitState` requirement.
 * Add `Properties` and `ValidStates` generics, i.e `StateMachine<Properties, ValidStates>`
 * Disable `console.error` logs by default. Can be enabled via `opts.logging`.
 * Make `transitTo` and others type safe using `ValidStates` generic.

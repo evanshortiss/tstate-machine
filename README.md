@@ -21,7 +21,7 @@ Run it by issuing an `npm run example` command.
 // A Reflect.defineMetata polyfill is required by tstate-machine
 import 'reflect-metadata';
 
-import { StateMachine, IStateDeclaration } from '@evanshortiss/tstate-machine';
+import { StateMachine, PartialProperties } from '@evanshortiss/tstate-machine';
 
 enum Colours {
   Red = 'Red',
@@ -29,17 +29,18 @@ enum Colours {
   Green = 'Green'
 };
 
-// Properties of the TrafficLightStateMachine. These can be automatically
-// updated as part of state transitions, or inherited from previous states
-type TrafficLightProperties = IStateDeclaration<TrafficLightStateMachine>;
+// Properties of the TrafficLightStateMachine
+type TrafficLightProps = {
+  safe: boolean
+  message: string
+}
+// Can be used to represent partial state changes
+type PartialTrafficLightProps = PartialProperties<TrafficLightProps>
 
 // A union type that defines valid states for the machine
 type TrafficLightStates = Colours.Red|Colours.Orange|Colours.Green
 
-class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, TrafficLightStates> {
-  message: string
-  safe: boolean
-
+class TrafficLightStateMachine extends StateMachine<TrafficLightProps, TrafficLightStates> {
   /**
    * Define the Red state:
    *  - Inherits the initial properties (passed in constructor)
@@ -47,13 +48,13 @@ class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, Traf
    *  - Can only transition to the Green state
    */
   @StateMachine.extend(StateMachine.INITIAL, [Colours.Green])
-  [Colours.Red]: TrafficLightProperties = { message: 'STOP' }
+  [Colours.Red]: PartialTrafficLightProps = { message: 'STOP' }
 
   @StateMachine.extend(StateMachine.INITIAL, [Colours.Green, Colours.Red])
-  [Colours.Orange]: TrafficLightProperties = { message: 'CAUTION' }
+  [Colours.Orange]: PartialTrafficLightProps = { message: 'CAUTION' }
 
   @StateMachine.extend(StateMachine.INITIAL, [Colours.Orange])
-  [Colours.Green]: TrafficLightProperties = { message: 'GO', safe: true }
+  [Colours.Green]: PartialTrafficLightProps = { message: 'GO', safe: true }
 
   constructor () {
     super({
@@ -61,7 +62,7 @@ class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, Traf
       initialTransitions: [Colours.Green],
 
       // Define the initial state values for the machine
-      initialStateProperties: {
+      props: {
         message: 'OFF',
         safe: false
       }
@@ -72,28 +73,28 @@ class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, Traf
 const machine = new TrafficLightStateMachine()
 
 machine.transitTo(Colours.Green)
-console.log(`Light is ${machine.currentState}. Message is ${machine.message}.`)
+console.log(`Light is ${machine.currentState}. Message is ${machine.props.message}.`)
 
 machine.transitTo(Colours.Orange)
-console.log(`Light is ${machine.currentState}. Message is ${machine.message}.`)
+console.log(`Light is ${machine.currentState}. Message is ${machine.props.message}.`)
 
 machine.transitTo(Colours.Red)
-console.log(`Light is ${machine.currentState}. Message is ${machine.message}.`)
+console.log(`Light is ${machine.currentState}. Message is ${machine.props.message}.`)
 ```
 
 ## Usage
 
-1. Create class that extends `StateMachine<ValidProps, ValidStates>`.
+1. Create class that extends `StateMachine<ValidProps, ValidStates>` and calls the super constructor.
 2. Define states on your class using `@StateMachine.extend(parent, transitions)`
-3. Call the super constructor with initialisation arguments.
+3. Use the state machine, and register optional callbacks.
 
-### Create your own StateMachine
+### #1 Create your own StateMachine
 
 To create your own state machine you must create class and inherit it from
 `StateMachine` class.
 
 All instances of `StateMachine` start in the default `StateMachine.INITIAL`
-state. You must pass `initialTransitions` and `initialStateProperties` to the
+state. You must pass `initialTransitions` and `initialProps` to the
 super constructor to correctly initialise the machine.
 
 ```ts
@@ -103,20 +104,22 @@ enum Colours {
   Green = 'Green'
 }
 
-type TrafficLightProperties = IStateDeclaration<TrafficLightStateMachine>;
+type TrafficLightProps = {
+  safe: boolean
+  message: string
+}
+type PartialTrafficLightProps = PartialProperties<TrafficLightProps>
 type TrafficLightStates = Colours.Red|Colours.Orange|Colours.Green
 
-class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, TrafficLightStates> {
-  message: string
-  safe: boolean
+class TrafficLightStateMachine extends StateMachine<TrafficLightProps, TrafficLightStates> {
 
   constructor() {
     super({
-      // Tells the state machine what state(s) it can initially transition to
+      // What state(s) the machine can initially transition to
       initialTransitions: [Colours.Green],
 
       // Define the initial property values for the machine
-      initialStateProperties: {
+      initialProps: {
         message: 'OFF',
         safe: false
       }
@@ -125,14 +128,14 @@ class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, Traf
 }
 ```
 
-### Define States
+### #2 Define States
 
 * States are defined as properties on the class.
 * The property name is the state name.
 * Use `@StateMachine.extend` to define a state. It accepts two arguments:
   * A state to inherit from. This can be `State.INITIAL` or another state.
   * The state, or states, to which this state can transition.
-* [IStateDeclaration](/src/StateDeclaration.ts) utility is used to:
+* [PartialProperties](/src/StateDeclaration.ts) utility is used to:
   * Extract a type containing class properties.
   * Pass this type as a Generic to the StateMachine.
   * This type is used for safety in defining state properties, and the initial state in the super constructor.
@@ -147,12 +150,14 @@ enum Colours {
   Green = 'Green'
 }
 
-type TrafficLightProperties = IStateDeclaration<TrafficLightStateMachine>;
+type TrafficLightProps = {
+  safe: boolean
+  message: string
+}
+type PartialTrafficLightProps = PartialProperties<TrafficLightProps>
 type TrafficLightStates = Colours.Red|Colours.Orange|Colours.Green
 
-class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, TrafficLightStates> {
-  message: string
-  safe: boolean
+class TrafficLightStateMachine extends StateMachine<TrafficLightProps, TrafficLightStates> {
 
   /**
    * Define the "Green" state (Colours.Green).
@@ -164,7 +169,7 @@ class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, Traf
    * This state can transition to the "Orange" state.
    */
   @StateMachine.extend(StateMachine.INITIAL, [Colours.Orange])
-  [Colours.Green]: TrafficLightProperties = {
+  [Colours.Green]: PartialTrafficLightProps = {
     message: 'GO',
     safe: true
   }
@@ -175,7 +180,7 @@ class TrafficLightStateMachine extends StateMachine<TrafficLightProperties, Traf
       initialTransitions: [Colours.Green],
 
       // Define the initial state values for the machine
-      initialStateProperties: {
+      initialProps: {
         message: 'OFF',
         safe: false
       }
@@ -198,12 +203,12 @@ defined, since this state is uses the inherited `false` value for `safe`.
  * This state can transition to the "Green" state.
  */
 @StateMachine.extend(StateMachine.INITIAL, [Colours.Green])
-[Colours.Red]: TrafficLightProperties = {
+[Colours.Red]: PartialTrafficLightProps = {
   message: 'STOP'
 }
 ```
 
-### Transition Between States
+### #3.1 Transition Between States
 
 Call `transitTo(targetState: string, ...args: Array<any>)` to transition
 between states. Arguments passed to `transitTo()` are passed to the `onEnter`
@@ -236,7 +241,7 @@ if (greenToRedError) {
 }
 ```
 
-### Transition Callbacks (onEnter and onLeave)
+### #3.2 Transition Callbacks (onEnter and onLeave)
 
 Callbacks can be registered for `onLeave` and `onEnter` phases of a satte
 transition.

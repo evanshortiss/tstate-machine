@@ -41,6 +41,7 @@
   "homepage": "https://github.com/evanshortiss/tstate-machine#readme",
   "devDependencies": {
     "@types/chai": "~4.0.3",
+    "@types/clone-deep": "^4.0.1",
     "@types/mocha": "~2.2.41",
     "@types/node": "~14.14.25",
     "chai": "~4.1.1",
@@ -55,5 +56,8 @@
   },
   "peerDependencies": {
     "reflect-metadata": ">=0.1.10"
+  },
+  "dependencies": {
+    "clone-deep": "^4.0.1"
   }
 }

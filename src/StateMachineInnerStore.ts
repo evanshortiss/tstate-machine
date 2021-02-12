@@ -1,14 +1,14 @@
-import { merge } from './utils/merge';
+import cloneDeep = require('clone-deep');
 
 /**
  * Store for inner meta-information for concrete StateMachine.
  * All methods and properties of this class used only in parent StateMachine class and no one child statemachine no access to it
  */
-export class StateMachineInnerStore {
+export class StateMachineInnerStore<Props> {
   /**
    * @description Store initial state
    */
-  private $initialState: Record<string, any> = {};
+  private $initialState: Props;
 
   /**
    * @description name of current state
@@ -30,17 +30,11 @@ export class StateMachineInnerStore {
   /**
    * @description store initial value of property to $initialState
    */
-  rememberInitialKey(key: string, value: any): void {
-    // Here is important to break links with statemachine properties.
-    // If value wasn`t primitive type - they save by link
-    // And if we change them - initialState change too.
-    const assignable: Record<string, any> = {};
-    assignable[key] = value;
-    merge(this.$initialState, assignable);
-    // Object.assign(this.$initialState, assignable);  // Here initial state become as mutable! We have test for it
+  rememberInitialState(props: Props): void {
+    this.$initialState = cloneDeep(props)
   }
 
-  get initialState(): object {
+  get initialState(): Props {
     return this.$initialState;
   }
 

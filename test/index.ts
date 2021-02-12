@@ -1,26 +1,30 @@
 import 'reflect-metadata';
 import { expect } from 'chai';
 import { StateMachine, TransitionError } from '../src/StateMachine';
-import { IStateDeclaration } from '../src/StateDeclaration';
+import { PartialProperties } from '../src/PartialProperties';
 
-type MachineProps = IStateDeclaration<Machine>;
+type MachineProps = {
+  text: string,
+  alert: {
+    text?: string
+    visible?: boolean
+  }
+}
+type PartialMachineProps = PartialProperties<MachineProps>;
 type ValidStates = 'requestState'|'errorState'|'mainState'|'successState'
 
 class Machine extends StateMachine<MachineProps, ValidStates> {
-  text: string;
-  alert: Record<string, any>;
-
   @StateMachine.extend(StateMachine.INITIAL, ['requestState'])
-  mainState: MachineProps = {};
+  mainState: PartialMachineProps = {};
 
   @StateMachine.extend('mainState', ['successState', 'errorState'])
-  requestState: MachineProps = {
+  requestState: PartialMachineProps = {
     text: 'request'
   };
 
   // Base state for extending only
   @StateMachine.extend('mainState', [])
-  doneState: MachineProps = {
+  doneState: PartialMachineProps = {
     text: 'done',
     alert: {
       visible: true
@@ -28,14 +32,14 @@ class Machine extends StateMachine<MachineProps, ValidStates> {
   };
 
   @StateMachine.extend('doneState', ['mainState'])
-  successState: MachineProps = {
+  successState: PartialMachineProps = {
     alert: {
       text: 'success'
     }
   };
 
   @StateMachine.extend('doneState', ['mainState'])
-  errorState: MachineProps = {
+  errorState: PartialMachineProps = {
     alert: {
       text: 'error'
     }
@@ -44,7 +48,7 @@ class Machine extends StateMachine<MachineProps, ValidStates> {
   constructor() {
     super({
       initialTransitions: ['mainState'],
-      initialStateProperties: {
+      props: {
         text: 'do',
         alert: {
           text: 'alert',
@@ -59,8 +63,8 @@ function expectIsInitial(machine: Machine): void {
   // TODO
   // Actually I don`t know why expect(machine).to.include(...) not work
   // to have property 'alert' of { text: 'alert', visible: false }, but got { text: 'alert', visible: false }
-  expect(machine.text).to.be.equal('do');
-  expect(machine.alert).to.be.eql({
+  expect(machine.props.text).to.be.equal('do');
+  expect(machine.props.alert).to.be.eql({
     text: 'alert',
     visible: false
   });
@@ -80,7 +84,7 @@ describe('tstate-machine', () => {
     machine.transitTo('requestState');
     expect(machine.currentState).to.equal('requestState');
 
-    expect(machine.alert).to.deep.equal({
+    expect(machine.props.alert).to.deep.equal({
       text: 'alert',
       visible: false
     });
@@ -95,7 +99,7 @@ describe('tstate-machine', () => {
     const machine = new Machine();
     machine.transitTo('mainState');
     machine.transitTo('requestState');
-    expect(machine.text).to.be.eq('request');
+    expect(machine.props.text).to.be.eq('request');
   });
 
   it('must not transit to incorrect state from initial', () => {
@@ -120,8 +124,8 @@ describe('tstate-machine', () => {
 
     expect(failureReason).to.equal(TransitionError.InvalidTransition)
 
-    expect(machine.text).to.be.equal('request');
-    expect(machine.alert).to.be.eql({
+    expect(machine.props.text).to.be.equal('request');
+    expect(machine.props.alert).to.be.eql({
       text: 'alert',
       visible: false
     });
@@ -147,8 +151,8 @@ describe('tstate-machine', () => {
     machine.transitTo('requestState');
     machine.transitTo('successState');
 
-    expect(machine.text).to.be.equal('done');
-    expect(machine.alert).to.be.eql({
+    expect(machine.props.text).to.be.equal('done');
+    expect(machine.props.alert).to.be.eql({
       text: 'success',
       visible: true
     });
