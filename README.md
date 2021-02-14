@@ -243,8 +243,16 @@ if (greenToRedError) {
 
 ### #3.2 Transition Callbacks (onEnter and onLeave)
 
-Callbacks can be registered for `onLeave` and `onEnter` phases of a satte
-transition.
+Multiple callbacks can be registered for `onLeave` and `onEnter` phases of a
+state transition.
+
+The `onLeave` callbacks are called **before** the transition has occurred. This
+means that the machine properties have not been updated when the callback is
+invoked.
+
+The `onEnter` callbacks are called **after** the transition has occurred. This
+means that the machine properties have been updated when the callback is
+invoked.
 
 ```ts
 const machine = new TrafficLightStateMachine();

@@ -9,6 +9,9 @@
 * Disable `console.error` logs by default. Can be enabled via `opts.logging`.
 * Make `transitTo` and others type safe using `ValidStates` generic.
 * Return typed errors from `transitTo`. These use the `TransitionError` type.
+* Change signature of `onEnter` callbacks to `(prevState: string ...args: Array<any>) => void`
+* Change signature of `onLeave` callbacks to `(targetState: string) => void`
+* Fix issue #1.
 
 # 1.1.6
 

@@ -1,5 +1,7 @@
 import cloneDeep = require('clone-deep');
 
+type LeaveCallback = (targetState: string) => void;
+type EnterCallback = (prevState: string) => void;
 /**
  * Store for inner meta-information for concrete StateMachine.
  * All methods and properties of this class used only in parent StateMachine class and no one child statemachine no access to it
@@ -19,13 +21,13 @@ export class StateMachineInnerStore<Props> {
    * @description - key-value-store for onEnter callbacks
    * key - state name, value - array with callbacks
    */
-  private onEnterCbs: Record<string, Array<(...args: Array<any>) => void>> = {};
+  private onEnterCbs: Record<string, EnterCallback[]> = {};
 
   /**
    * @description - key-value-store for onLeave callbacks
    * key - state name, value - array with callbacks
    */
-  private onLeaveCbs: Record<string, Array<() => void>> = {};
+  private onLeaveCbs: Record<string, LeaveCallback[]> = {};
 
   /**
    * @description store initial value of property to $initialState
@@ -49,7 +51,7 @@ export class StateMachineInnerStore<Props> {
     if (!this.onEnterCbs[stateName]) {
       this.onEnterCbs[stateName] = [];
     }
-    const stateEnterCbs: Array<() => void> = this.onEnterCbs[stateName];
+    const stateEnterCbs: EnterCallback[] = this.onEnterCbs[stateName];
     stateEnterCbs.push(cb);
     return (): any => stateEnterCbs.splice(stateEnterCbs.indexOf(cb), 1);
   }
@@ -57,25 +59,25 @@ export class StateMachineInnerStore<Props> {
   /**
    * @description register onLeave callback, return function for drop callback
    */
-  registerLeaveCallback(stateName: string, cb: () => void): () => void {
+  registerLeaveCallback(stateName: string, cb: LeaveCallback): () => void {
     if (!this.onLeaveCbs[stateName]) {
       this.onLeaveCbs[stateName] = [];
     }
-    const stateLeaveCbs: Array<() => void> = this.onLeaveCbs[stateName];
+    const stateLeaveCbs: LeaveCallback[] = this.onLeaveCbs[stateName];
     stateLeaveCbs.push(cb);
     return (): any => stateLeaveCbs.splice(stateLeaveCbs.indexOf(cb), 1);
   }
 
-  callEnterCbs(stateName: string, args?: Array<any>): void {
+  callEnterCbs(prevState: string, stateName: string, args?: Array<any>): void {
     if (this.onEnterCbs[stateName]) {
-      this.onEnterCbs[stateName].forEach((cb) => cb(...(args as any)));
+      this.onEnterCbs[stateName].forEach((cb) => cb.apply(cb, [prevState].concat(args || [])));
     }
   }
 
-  callLeaveCbs(): void {
+  callLeaveCbs(targetState: string): void {
     const stateName = this.currentState;
     if (this.onLeaveCbs[stateName]) {
-      this.onLeaveCbs[stateName].forEach((cb) => cb());
+      this.onLeaveCbs[stateName].forEach((cb) => cb(targetState));
     }
   }
 }

@@ -193,7 +193,8 @@ describe('tstate-machine', () => {
   it('.onEnter() register correct', () => {
     const machine = new Machine();
     let a = 1;
-    machine.onEnter('mainState', () => {
+    machine.onEnter('mainState', (prevState) => {
+      expect(prevState).to.equal(StateMachine.INITIAL)
       a += 1;
     });
     machine.transitTo('mainState');
@@ -203,7 +204,8 @@ describe('tstate-machine', () => {
   it('.onEnter(...args) register correct', () => {
     const machine = new Machine();
     let a = 1;
-    machine.onEnter('mainState', (inc: number) => {
+    machine.onEnter('mainState', (prevState: string, inc: number) => {
+      expect(prevState).to.equal(StateMachine.INITIAL)
       a += inc;
     });
     machine.transitTo('mainState', 2);
@@ -255,4 +257,30 @@ describe('tstate-machine', () => {
     expect(a).to.be.eq(1);
     expect(b).to.be.eq(2);
   });
+
+  it('should fail when trying to trigger transition from onEnter callback', () => {
+    const machine = new Machine();
+
+    machine.onEnter('mainState', (prevState: string) => {
+      expect(prevState).to.equal(StateMachine.INITIAL)
+      expect(() => {
+        machine.transitTo('successState')
+      }).to.throw('Calling transitTo from an onEnter/onLeave callback is not supported')
+    })
+
+    machine.transitTo('mainState')
+  })
+
+  it('should fail when trying to trigger transition from onLeave callback', () => {
+    const machine = new Machine();
+
+    machine.onLeave('initial', (toState: string) => {
+      expect(toState).to.equal('mainState')
+      expect(() => {
+        machine.transitTo('successState')
+      }).to.throw('Calling transitTo from an onEnter/onLeave callback is not supported')
+    })
+
+    machine.transitTo('mainState')
+  })
 });

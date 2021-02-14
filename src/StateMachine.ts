@@ -27,6 +27,7 @@ export class StateMachine<
   private initialTransitions: Array<string>;
   private logging: boolean;
   public props: Props;
+  private transitioning = false
 
   constructor(opts: {
     initialTransitions: Array<ValidStates>;
@@ -127,6 +128,20 @@ export class StateMachine<
     return StateMachineMetadata.getByName(this.selfPrototype, stateName);
   }
 
+  @StateMachine.hide
+  transitTo(
+    targetState: ValidStates,
+    ...args: Array<any>
+  ) {
+    if (this.transitioning) {
+      throw new Error('Calling transitTo from an onEnter/onLeave callback is not supported')
+    }
+
+    this.transitioning = true
+
+    return this._transitTo(targetState, ...args)
+  }
+
   /**
    * @description Method for transit machine to another state
    * Check the target state is registered, check transition is possible
@@ -134,7 +149,7 @@ export class StateMachine<
    * @param args - any data for pass to onEnter callback
    */
   @StateMachine.hide
-  transitTo(
+  private _transitTo(
     targetState: ValidStates,
     ...args: Array<any>
   ): TransitionError | void {
@@ -196,7 +211,7 @@ export class StateMachine<
     }
 
     // Call onLeave callbacks
-    this.$store.callLeaveCbs();
+    this.$store.callLeaveCbs(targetState);
 
     // Apply states chain
     merge(this.props, this.$store.initialState);
@@ -205,10 +220,13 @@ export class StateMachine<
       merge(this.props, tempState);
     }
 
-    // Call all onEnter callbacks
-    this.$store.callEnterCbs(targetState, args);
-
+    const prevState = this.$store.currentState
     this.$store.currentState = targetState;
+
+    // Call all onEnter callbacks
+    this.$store.callEnterCbs(prevState, targetState, args);
+
+    this.transitioning = false
   }
 
   /**
@@ -229,7 +247,7 @@ export class StateMachine<
   }
 
   @StateMachine.hide
-  onLeave(stateName: ValidStates, cb: () => void): () => void {
+  onLeave(stateName: ValidStates|'initial', cb: (toState: string) => void): () => void {
     return this.$store.registerLeaveCallback(stateName, cb);
   }
 
