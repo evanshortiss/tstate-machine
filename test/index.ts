@@ -131,6 +131,19 @@ describe('tstate-machine', () => {
     });
   });
 
+  it('must be able to transit to correct state after incorrect state attempt', () => {
+    const machine = new Machine();
+    // Correct transitions
+    machine.transitTo('mainState');
+    machine.transitTo('requestState');
+    const failureReason = machine.transitTo('mainState'); // Will fail
+    machine.transitTo('successState'); // Should succeed
+
+    expect(failureReason).to.equal(TransitionError.InvalidTransition);
+
+    expect(machine.currentState).to.equal('successState')
+  });
+
   it('must not transit to unregistered state from initial', () => {
     const machine = new Machine();
     // need to cast to attempt to enter invalid state

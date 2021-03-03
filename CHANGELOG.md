@@ -1,3 +1,7 @@
+# 2.0.1
+
+* Fix error where `transitioning` boolean was left `true` after state change had completed.
+
 # 2.0.0
 
 * `StateMachine` constructor now expects an options Object, i.e `super(opts)`.

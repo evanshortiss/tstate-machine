@@ -138,8 +138,10 @@ export class StateMachine<
     }
 
     this.transitioning = true
+    const ret = this._transitTo(targetState, ...args)
+    this.transitioning = false
 
-    return this._transitTo(targetState, ...args)
+    return ret
   }
 
   /**
@@ -225,8 +227,6 @@ export class StateMachine<
 
     // Call all onEnter callbacks
     this.$store.callEnterCbs(prevState, targetState, args);
-
-    this.transitioning = false
   }
 
   /**

@@ -15,6 +15,7 @@ test/
 .idea/**/tasks.xml
 .idea/dictionaries
 .idea/
+.editorconfig
 
 # Sensitive or high-churn files:
 .idea/**/dataSources/
