@@ -20,6 +20,7 @@
     "baseUrl": "./src"
   },
   "files": [
+    "example/traffic.ts",
     "src/index.ts"
   ]
 }

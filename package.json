@@ -1,15 +1,13 @@
 {
   "name": "@evanshortiss/tstate-machine",
-  "version": "1.1.6",
+  "version": "2.0.0",
   "description": "TypeScript implementation of StateMachine",
   "main": "src/index.js",
   "types": "src/index.d.ts",
-  "directories": {
-    "test": "test"
-  },
   "scripts": {
-    "test": "tsc && mocha -r ts-node/register test/**/*.ts",
-    "lint-code": "tslint -c ./tslint.json -p ./tsconfig.json --type-check",
+    "example": "tsc && node example/traffic.js",
+    "test": "tsc && mocha -r ts-node/register test/index.ts && mocha -r ts-node/register test/without-polyfill.ts",
+    "format": "prettier --config package.json --write \"**/*.ts\"",
     "build": "tsc",
     "prepublish": "tsc"
   },
@@ -22,6 +20,16 @@
     "state-machine",
     "typescript"
   ],
+  "husky": {
+    "hooks": {
+      "pre-commit": "pretty-quick --staged --pattern \"**/*.ts\""
+    }
+  },
+  "prettier": {
+    "trailingComma": "none",
+    "singleQuote": true,
+    "tabWidth": 2
+  },
   "authors": [
     "Vladimir Sannikov",
     "Evan Shortiss"
@@ -33,18 +41,23 @@
   "homepage": "https://github.com/evanshortiss/tstate-machine#readme",
   "devDependencies": {
     "@types/chai": "~4.0.3",
+    "@types/clone-deep": "^4.0.1",
     "@types/mocha": "~2.2.41",
-    "chai": "4.1.1",
-    "dts-bundle": "0.7.2",
-    "mocha": "3.5.0",
-    "nyc": "11.2.1",
-    "ts-loader": "2.3.2",
-    "ts-node": "3.3.0",
-    "tslint": "5.3.2",
-    "typescript": "~4.1.3",
-    "webpack": "2.6.1"
+    "@types/node": "~14.14.25",
+    "chai": "~4.1.1",
+    "husky": "~5.0.9",
+    "mocha": "~8.2.1",
+    "nyc": "~15.1.0",
+    "prettier": "~2.2.1",
+    "pretty-quick": "~3.1.0",
+    "reflect-metadata": "~0.1.13",
+    "ts-node": "~3.3.0",
+    "typescript": "~4.1.3"
+  },
+  "peerDependencies": {
+    "reflect-metadata": ">=0.1.10"
   },
   "dependencies": {
-    "reflect-metadata": "0.1.10"
+    "clone-deep": "^4.0.1"
   }
 }
